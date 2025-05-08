@@ -7,7 +7,7 @@ from django.db.utils import OperationalError
 from django.utils import timezone
 from django.contrib.auth.models import User
 
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, generics
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
@@ -15,8 +15,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from .forms import SignUpForm
-from .models import ErrorLog
-from .serializers import ErrorLogSerializer, UserSerializer
+from .models import ErrorLog, Bug
+from .serializers import ErrorLogSerializer, UserSerializer, BugSerializer
 from rest_framework.exceptions import ValidationError
 
 
@@ -121,3 +121,15 @@ class CheckViewSet(viewsets.ViewSet):
     def test_long_response(self, request):
         data = {"data": ["This is a long response"] * 10}
         return Response(data)
+
+class BugListCreateView(generics.ListCreateAPIView):
+    serializer_class = BugSerializer
+
+    
+    def get_queryset(self):
+        queryset = Bug.objects.all()
+        severity = self.request.query_params.get('severity')
+        if severity:
+            queryset = queryset.filter(severity=severity.upper())    
+        return queryset
+    
